@@ -33,9 +33,9 @@ namespace StormDreams
             if (IsServer)
             {
                 Instance = this;
-
-                _matchTimer.OnChange += OnMatchTimerChange;
             }
+
+            _matchTimer.OnChange += OnMatchTimerChange;
         }
 
         public override void OnStartServer()
@@ -49,19 +49,11 @@ namespace StormDreams
         {
             base.OnStopNetwork();
 
-            if (IsServer)
-            {
-                _matchTimer.OnChange -= OnMatchTimerChange;
-            }
+            _matchTimer.OnChange += OnMatchTimerChange;
         }
 
         private void Update()
         {
-            if (InstanceFinder.IsServer && Input.GetKeyDown(KeyCode.P))
-            {
-                StartMatch();
-            }
-
             _matchTimer.Update(Time.deltaTime);
         }
 
@@ -74,6 +66,16 @@ namespace StormDreams
             _currentBall.transform.position = Vector3.up;
 
             _matchTimer.StartTimer(_matchTime, true);
+        }
+
+        public void FinishMatchServer()
+        {
+            _currentBall.Despawn(DespawnType.Destroy);
+        }
+
+        public void FinishMatchClient()
+        {
+            Debug.Log($"Finish match: {_teamOneGoal} - {_teamTwoGoal}");
         }
 
         public void HandleGoal(int team)
@@ -89,8 +91,6 @@ namespace StormDreams
                 _teamTwoGoal += 1;
             }
 
-            Debug.Log($"{_teamOneGoal} - {_teamTwoGoal}");
-
             Invoke(nameof(ResetMatch), 2.0f);
         }
 
@@ -105,11 +105,18 @@ namespace StormDreams
 
         private void OnMatchTimerChange(SyncTimerOperation op, float prev, float next, bool asServer)
         {
-            if (!asServer)
+            if (asServer)
             {
                 if (op == SyncTimerOperation.Finished)
                 {
-                    Debug.Log($"Finish match: {_teamOneGoal} - {_teamTwoGoal}");
+                    FinishMatchServer();
+                }
+            }
+            else
+            {
+                if (op == SyncTimerOperation.Finished)
+                {
+                    FinishMatchClient();
                 }
             }
         }
@@ -118,7 +125,7 @@ namespace StormDreams
         {
             if (!asServer)
             {
-
+                Debug.Log($"{_teamOneGoal} - {_teamTwoGoal}");
             }
         }
 
@@ -126,7 +133,7 @@ namespace StormDreams
         {
             if (!asServer)
             {
-                
+                Debug.Log($"{_teamOneGoal} - {_teamTwoGoal}");
             }
         }
     }
